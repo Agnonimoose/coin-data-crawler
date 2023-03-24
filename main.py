@@ -19,7 +19,7 @@ end = time.time()
 start = time.time() - (60 * 60 * 24 * 7)
 
 
-con = ps.connect(host='localhost', port=5432, dbname="wallets", user="postgres", password="1Proffblyth")
+con = ps.connect(host='localhost', port=5432, dbname="wallets", user="postgres", password="Christoff")
 cur = con.cursor()
 
 class baseGrabber:
