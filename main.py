@@ -137,7 +137,7 @@ def getAddress(browser):
 
 
 
-def getCoinData(url):
+def getCoinData(url, opts):
     browser = Firefox(options=opts)
     browser.get(url)
     # z = browser.find_elements("class name", "div.history")
@@ -279,7 +279,7 @@ if __name__=="__main__":
     for link in links:
         ready = link + "historical-data/"
         try:
-            data = getCoinData(ready)
+            data = getCoinData(ready, opts)
             if data == False:
                 pass
             else:
