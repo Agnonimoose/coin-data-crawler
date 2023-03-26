@@ -135,6 +135,57 @@ def getAddress(browser):
 
 
 
+def getETHData(opts):
+    url = "https://coinmarketcap.com/currencies/ethereum/historical-data/"
+
+    browser = Firefox(options=opts)
+    browser.get(url)
+    try:
+        browser.execute_script("window.scrollTo(200,document.body.scrollHeight)")
+        height = browser.execute_script("return document.body.scrollHeight")
+        for i in range(90):
+            lm = findLoadMore(browser)
+            scrollToEle(browser, lm)
+            try:
+                lm.click()
+            except:
+                browser.execute_script("window.scrollBy(0,-50)")
+                lm.click()
+            time.sleep(random.randint(1200, 1800) / 1000)
+            old_height = height
+            height = browser.execute_script("return document.body.scrollHeight")
+            if old_height == height:
+                break
+
+        table = browser.find_element(By.CLASS_NAME, 'cxLkYn')
+        text = table.text
+        lists = []
+        for e, i in enumerate(text.split('\n')):
+            dt = time.time()
+            if e == 0:
+                pass
+            else:
+                dt = dt - ((e-1)*60*60*24)
+                t = i.split(' $')
+                t[0] = dt
+                for e2, i2, in enumerate(t):
+                    if e2 == 0:
+                        pass
+                    else:
+                        i2 = i2.replace(",", "")
+                        t[e2] = float(i2)
+
+                if len(t) == 6:
+                    t.append(0.0)
+                lists.append(t)
+
+        browser.close()
+        return lists
+    except Exception as e:
+        print(e)
+        print(str(traceback.format_exc(10)))
+        browser.close()
+        return False
 
 
 def getCoinData(url, opts):
@@ -258,43 +309,58 @@ def grabAllLinks(browser):
     return totalLinks
 
 
+# if __name__=="__main__":
+#     ########################################
+#     ######## Change these Settigs ##########
+#     ########################################
+#     opts = Options()
+#     opts.headless = True
+#     opts.binary_location = r'C:\Program Files\WindowsApps\Mozilla.Firefox_111.0.1.0_x64__n80bbvh6b1yt2\VFS\ProgramFiles\Firefox Package Root\firefox.exe'
+#     ########################################
+#     ########################################
+#
+#     url = "https://coinmarketcap.com/"
+#     browser = Firefox(options=opts)
+#     browser.get(url)
+#     time.sleep(random.randint(2700, 3000) / 1000)
+#     z = grabAllLinks(browser)
+#
+#     sqlInsert = """INSERT INTO {table} (waddress, timestamp_, openprice, highprice, lowprice, closeprice, volume, marketcap) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""".format(table="cmcrates")
+#     links = jGrabber("links.json")
+#     for link in links:
+#         ready = link + "historical-data/"
+#         try:
+#             data = getCoinData(ready, opts)
+#             if data == False:
+#                 pass
+#             else:
+#                 for row in data[1]:
+#                     cur.execute(sqlInsert, (data[0],  *row))
+#                     con.commit()
+#         except Exception as e:
+#             print("245 = ", e)
+#             print(str(traceback.format_exc(10)))
+#             opened = jGrabber("failed.json")
+#             opened.append(link)
+#             jDumper("failed", opened)
+#
+#     con.close()
+
 if __name__=="__main__":
-    ########################################
-    ######## Change these Settigs ##########
-    ########################################
+
     opts = Options()
-    opts.headless = True
+    # opts.headless = True
     opts.binary_location = r'C:\Program Files\WindowsApps\Mozilla.Firefox_111.0.1.0_x64__n80bbvh6b1yt2\VFS\ProgramFiles\Firefox Package Root\firefox.exe'
-    ########################################
-    ########################################
 
-    url = "https://coinmarketcap.com/"
-    browser = Firefox(options=opts)
-    browser.get(url)
-    time.sleep(random.randint(2700, 3000) / 1000)
-    z = grabAllLinks(browser)
 
-    sqlInsert = """INSERT INTO {table} (waddress, timestamp_, openprice, highprice, lowprice, closeprice, volume, marketcap) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""".format(table="cmcrates")
-    links = jGrabber("links.json")
-    for link in links:
-        ready = link + "historical-data/"
-        try:
-            data = getCoinData(ready, opts)
-            if data == False:
-                pass
-            else:
-                for row in data[1]:
-                    cur.execute(sqlInsert, (data[0],  *row))
-                    con.commit()
-        except Exception as e:
-            print("245 = ", e)
-            print(str(traceback.format_exc(10)))
-            opened = jGrabber("failed.json")
-            opened.append(link)
-            jDumper("failed", opened)
+    data = getETHData(opts)
+    print("data = ", data)
+    sqlInsert = """INSERT INTO {table} (timestamp_, openprice, highprice, lowprice, closeprice, volume, marketcap) VALUES (%s, %s, %s, %s, %s, %s, %s)""".format(table="ethrates")
+    for row in data:
+        cur.execute(sqlInsert, (row))
+        con.commit()
 
     con.close()
-
 
 
 
